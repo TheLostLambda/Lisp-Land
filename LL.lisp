@@ -1,11 +1,7 @@
-;(defvar *cell-id* 0)
 (defparameter *cells* '())
 
 (defclass std-cell ()
-  ;((ID
-  ;  :initform (incf *cell-id*)
-  ;  :reader ID)
-  (POS
+  ((POS
     :initarg :POS
     :accessor POS)
   (ATP
@@ -30,3 +26,6 @@
 (defun new-cell (POS ATP NA AA FA G DNA)
   (push (make-instance 'std-cell :POS POS :ATP ATP :NA NA :AA AA 
                                 :FA FA :G G :DNA DNA) *cells*))
+
+(defmacro fetch-value (accessor lst index)
+  `(,accessor (nth ,index (reverse ,lst))))
