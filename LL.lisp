@@ -1,3 +1,5 @@
+;; See Licence for legal information
+
 (defparameter *cells* '())
 
 (defclass std-cell ()
