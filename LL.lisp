@@ -1,26 +1,32 @@
-(defvar *cell-id* 0)
+;(defvar *cell-id* 0)
+(defparameter *cells* '())
 
 (defclass std-cell ()
-  ((ID
-    :initform (incf *cell-id*))
+  ;((ID
+  ;  :initform (incf *cell-id*)
+  ;  :reader ID)
   (POS
     :initarg :POS
-    :initform (cons 100 100))
+    :accessor POS)
   (ATP
     :initarg :ATP
-    :initform 1000)
+    :accessor ATP)
   (NA 
     :initarg :NA
-    :initform 1000)
+    :accessor NA)
   (AA
     :initarg :AA
-    :initform 1200000)
+    :accessor AA)
   (FA
     :initarg :FA
-    :initform 5000)
+    :accessor FA)
   (G
     :initarg :G
-    :initform 100)
+    :accessor G)
   (DNA
     :initarg :DNA
-    :initform (error "Genome must be specified"))))
+    :accessor DNA)))
+
+(defun new-cell (POS ATP NA AA FA G DNA)
+  (push (make-instance 'std-cell :POS POS :ATP ATP :NA NA :AA AA 
+                                :FA FA :G G :DNA DNA) *cells*))
