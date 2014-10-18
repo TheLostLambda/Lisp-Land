@@ -20,3 +20,25 @@
 (defun dump-ci ()
   (dolist (entry *cells*)
     (format t "~%~{~a:~10t~a~%~}~%" entry)))
+
+(defun save-ci (filename)
+  (with-open-file (out filename
+                   :direction :output
+                   :if-exists :supersede)
+    (with-standard-io-syntax
+      (print *cells* out))))
+
+(defun load-ci (filename)
+  (with-open-file (in filename)
+    (with-standard-io-syntax
+      (setf *cells* (read in)))))
+      
+(defun close-sim ()
+  (format t "Saving simulation state and exiting...")
+  (save-ci "Celldata.db")
+  (quit))
+  
+(defun init-sim ()
+  (format t "Loading simulation state and starting...~%")
+  (load-ci "Celldata.db")
+  (format t "...done."))
