@@ -1,5 +1,3 @@
-;; See Licence for legal information
-
 (defparameter *cells* '())
 
 (defun new-cell (POS ATP NA AA FA G DNA)
