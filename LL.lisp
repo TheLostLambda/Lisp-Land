@@ -19,6 +19,6 @@
     (dotimes (i (length DNA-seq))
       (push (parse-gene (nth i DNA-seq)) DNA-val)) (reverse DNA-val)))
 
-;;(defun dump-ci () Work in progress, dump all cell info in a formatted form.
-;;  (dotimes (i (length *cells*))
-;;  (format t "~%Cell: ~a~%Position: ~a~%Nucleic Acids:"))
+(defun dump-ci ()
+  (dolist (entry *cells*)
+    (format t "~%~{~a:~10t~a~%~}~%" entry)))
