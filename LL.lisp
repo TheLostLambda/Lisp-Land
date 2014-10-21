@@ -1,4 +1,5 @@
 (defparameter *cells* '())
+(defparameter *datafile* "Celldata.db")
 
 (defun new-cell (POS ATP NA AA FA G DNA)
   (push (list :POS POS :ATP ATP :NA NA 
@@ -33,12 +34,25 @@
     (with-standard-io-syntax
       (setf *cells* (read in)))))
       
+(defun rand-mutate (DNA-seq)
+  (let ((gene (random (length DNA-seq) (make-random-state t))))
+    (let ((base (random (length (nth gene DNA-seq)) (make-random-state t))))
+      (cond ((= (nth base (nth gene DNA-seq)) 0) (setf (nth base (nth gene DNA-seq)) 1))
+            (t (setf (nth base (nth gene DNA-seq)) 0))) DNA-seq)))
+            
+(defun mutate-times (DNA-seq times)
+  (dotimes (i times)
+    (rand-mutate DNA-seq)))
+  
 (defun close-sim ()
   (format t "Saving simulation state and exiting...")
-  (save-ci "Celldata.db")
+  (save-ci *datafile*)
   (quit))
   
 (defun init-sim ()
-  (format t "Loading simulation state and starting...~%")
-  (load-ci "Celldata.db")
-  (format t "...done."))
+  (format t "Loading simulation state and starting...")
+  (when (probe-file *datafile*)
+    (load-ci *datafile*))
+  (format t "done."))
+
+(init-sim)
