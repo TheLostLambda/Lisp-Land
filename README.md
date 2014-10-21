@@ -8,10 +8,23 @@ Artificial life simulation in Lisp
 * Possibility for single and multicellular organisms.
 * Realistic genetics system, support for mutation, inheritance, and evolution.
 
+Idea/Method
+===========
+
+###Standard Cell Class:
+  Every cell in the simulation is represented as a property list. Each list contains the following elements in order: POS (Position, represented as an x and y coordinate consed together ) ATP (Adenosine Triphosphate, regular integer) NA (Nucleic Acids, regular integer) AA (Amino Acids, regular integer) FA (Fatty Acids, regular integer) G (Glucose, regular integer) DNA (Deoxyribonucleic acid, represented as a list of genes, each one containing a sequence of binary numbers)
+
+###Digital DNA Structure
+  In order to reach goal number three, each cell will have a unique Digital DNA (dDNA) sequence. The dDNA will be made up of many separate genes, each encoding for a specific trait. Each gene will be a number 0-31 represented in binary, 
+ex. ((0 1 0 1 1) (0 0 0 1 1) (0 1 1 1 0)) Translating to (11 3 14) Not all 31 cases will be used in every gene. In the rare case one trait requires than 31 values, two genes will be used. If data needs to become a percentage, values 1-20 are used and multiplied by 5. See “Genes Translated ” for more in depth info.
 
 What "Genes" code for what?
 ===========================
 
 This is one of the most important features in Lisp-Life, the dynamic genetics system.
 
-Add gene info here...
+#####Gene 1 - Primary Membrane composition:
+Determines permeability of the membrane (Least to most permeable). Slot 31 is unused
+1. Phospholipids (purely saturated) [1-10]
+2. Phospholipids (mixed) [11-20]
+3. Free fatty acids. [21-30]
