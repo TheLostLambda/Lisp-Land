@@ -1,12 +1,17 @@
 (defparameter *cells* '())
+(defparameter *world* '())
 (defparameter *datafile* "Celldata.db")
 
 (defun new-cell (POS ATP NA AA FA G DNA)
   (push (list :POS POS :ATP ATP :NA NA 
          :AA AA :FA FA :G G :DNA DNA) *cells*))
 
-(defmacro fetch-value (accessor index)
-  `(getf (nth ,index (reverse *cells*)) ,accessor))
+(defun new-world (TEMP PH NAC AAC FAC GC BPV)
+  (push (list :TEMP TEMP :PH PH :NAC NAC 
+         :AAC AAC :FAC FAC :GC GC :BPV BPV) *world*))
+
+(defmacro fetch-value (accessor index lst)
+  `(getf (nth ,index (reverse lst)) ,accessor))
 
 (defun parse-gene (gene)
   (let ((gene-val 0))
