@@ -1,5 +1,5 @@
-(defparameter *cells* '())
-(defparameter *world* '())
+(defparameter *cells* nil)
+(defparameter *world* nil)
 (defparameter *datafile* "Celldata.db")
 
 (defun new-cell (POS ATP NA AA FA G DNA)
@@ -7,8 +7,8 @@
          :AA AA :FA FA :G G :DNA DNA) *cells*))
 
 (defun new-world (TEMP PH NAC AAC FAC GC BPV)
-  (push (list :TEMP TEMP :PH PH :NAC NAC 
-         :AAC AAC :FAC FAC :GC GC :BPV BPV) *world*))
+  (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
+                :AAC AAC :FAC FAC :GC GC :BPV BPV)))
 
 (defmacro fetch-value (accessor index lst)
   `(getf (nth ,index (reverse lst)) ,accessor))
@@ -32,12 +32,14 @@
                    :direction :output
                    :if-exists :supersede)
     (with-standard-io-syntax
-      (print *cells* out))))
+      (print *cells* out)
+      (print *world* out))))
 
 (defun load-ci (filename)
   (with-open-file (in filename)
     (with-standard-io-syntax
-      (setf *cells* (read in)))))
+      (setf *cells* (read in))
+      (setf *world* (read in)))))
       
 (defun rand-mutate (DNA-seq)
   (let ((gene (random (length DNA-seq) (make-random-state t))))
