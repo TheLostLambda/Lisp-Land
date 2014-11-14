@@ -1,3 +1,10 @@
+(ql:quickload 'lispbuilder-sdl)
+(ql:quickload 'lispbuilder-sdl-gfx)
+
+(defparameter *width* 100)
+(defparameter *height* 100)
+(defparameter *pixsize* 5)
+
 (defparameter *cells* nil)
 (defparameter *world* nil)
 (defparameter *datafile* "Celldata.db")
@@ -11,7 +18,7 @@
                 :AAC AAC :FAC FAC :GC GC :BPV BPV)))
 
 (defmacro fetch-value (accessor index lst)
-  `(getf (nth ,index (reverse lst)) ,accessor))
+  `(getf (nth ,index (reverse ,lst)) ,accessor))
 
 (defun parse-gene (gene)
   (let ((gene-val 0))
@@ -52,14 +59,28 @@
     (rand-mutate DNA-seq)))
   
 (defun close-sim ()
-  (format t "Saving simulation state and exiting...")
+  (format t "Saving simulation state and exiting...~%")
   (save-ci *datafile*)
-  (quit))
+  (exit))
   
 (defun init-sim ()
-  (format t "Loading simulation state and starting...")
+  (format t "Loading simulation state and starting...~%")
   (when (probe-file *datafile*)
     (load-ci *datafile*))
   (format t "done."))
+
+(defun display-sim ()
+  (sdl:with-init ()
+  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
+    (setf (sdl:frame-rate) 60)
+    (sdl:with-events ()
+      (:quit-event () t)
+      (:idle ()
+        ;;(next-tick)
+        (dotimes (i (length *cells*))
+          (let ((POS (fetch-value :POS i *cells*)))
+                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
+                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
+        (sdl:update-display)))))
 
 (init-sim)
