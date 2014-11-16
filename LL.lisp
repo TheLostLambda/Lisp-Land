@@ -1,5 +1,5 @@
-(ql:quickload 'lispbuilder-sdl)
-(ql:quickload 'lispbuilder-sdl-gfx)
+;(ql:quickload 'lispbuilder-sdl)
+;(ql:quickload 'lispbuilder-sdl-gfx)
 
 (defparameter *width* 100)
 (defparameter *height* 100)
@@ -9,13 +9,16 @@
 (defparameter *world* nil)
 (defparameter *datafile* "Celldata.db")
 
+(defun random-range (min max)
+  (+ min (random (- max min) (make-random-state t))))
+
 (defun new-cell (POS ATP NA AA FA G DNA)
   (push (list :POS POS :ATP ATP :NA NA 
          :AA AA :FA FA :G G :DNA DNA) *cells*))
 
-(defun new-world (TEMP PH NAC AAC FAC GC BPV)
+(defun new-world (TEMP PH NAC AAC FAC GC RAD BPV)
   (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
-                :AAC AAC :FAC FAC :GC GC :BPV BPV)))
+                :AAC AAC :FAC FAC :GC GC :RAD RAD :BPV BPV)))
 
 (defmacro fetch-value (accessor index lst)
   `(getf (nth ,index (reverse ,lst)) ,accessor))
@@ -49,8 +52,8 @@
       (setf *world* (read in)))))
       
 (defun rand-mutate (DNA-seq)
-  (let ((gene (random (length DNA-seq) (make-random-state t))))
-    (let ((base (random (length (nth gene DNA-seq)) (make-random-state t))))
+  (let ((gene (random-range 0 (length DNA-seq))))
+    (let ((base (random-range 0 (length (nth gene DNA-seq)))))
       (cond ((= (nth base (nth gene DNA-seq)) 0) (setf (nth base (nth gene DNA-seq)) 1))
             (t (setf (nth base (nth gene DNA-seq)) 0))) DNA-seq)))
             
@@ -69,18 +72,22 @@
     (load-ci *datafile*))
   (format t "done."))
 
-(defun display-sim ()
-  (sdl:with-init ()
-  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
-    (setf (sdl:frame-rate) 60)
-    (sdl:with-events ()
-      (:quit-event () t)
-      (:idle ()
-        ;;(next-tick)
-        (dotimes (i (length *cells*))
-          (let ((POS (fetch-value :POS i *cells*)))
-                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
-                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
-        (sdl:update-display)))))
+(defun next-tick ()
+  ;;(Cel-Env) Function for reacting to the enviroment, for now, absorbing macromolicules.
+  )
+
+;(defun display-sim ()
+;  (sdl:with-init ()
+;  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
+;    (setf (sdl:frame-rate) 60)
+;    (sdl:with-events ()
+;      (:quit-event () t)
+;      (:idle ()
+;        ;;(next-tick)
+;        (dotimes (i (length *cells*))
+;          (let ((POS (fetch-value :POS i *cells*)))
+;                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
+;                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
+;        (sdl:update-display)))))
 
 (init-sim)
