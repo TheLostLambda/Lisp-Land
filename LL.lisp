@@ -22,6 +22,12 @@
 
 (defmacro fetch-value (accessor index lst)
   `(getf (nth ,index (reverse ,lst)) ,accessor))
+  
+(defun fetch-props (lst)
+  (let ((nlst nil))
+    (do ((i 0 (+ i 2)))
+        ((>= i (length lst)))
+      (push (nth i lst) nlst)) (reverse nlst)))  
 
 (defun parse-gene (gene)
   (let ((gene-val 0))
@@ -72,8 +78,19 @@
     (load-ci *datafile*))
   (format t "done."))
 
+;;(defun Cel-Env (celli)
+;;  (do ((i 0 (1+ i))
+;;       (prop (nth i '(:NAC :AAC :FAC :GC)) (nth i '(:NAC :AAC :FAC :GC)))
+;;       (cprop (nth i '(:NA :AA :FA :G)) (nth i '(:NA :AA :FA :G)))
+;;       (propcont (fetch-value prop 0 *world*) (fetch-value prop 0 *world*))
+;;       (cpropcont (fetch-value cprop celli *cells*) (fetch-value cprop celli *cells*)))
+;;      ((>= i (length (fetch-props *world*))))
+;;    (let ((chance (random-range 0 100)))
+;;      (cond ((<= chance propcont) (+ (/ propcont 3) )))
+;;    ))) 
+  
 (defun next-tick ()
-  ;;(Cel-Env) Function for reacting to the enviroment, for now, absorbing macromolicules.
+  ;;(Cel-Env)
   )
 
 ;(defun display-sim ()
