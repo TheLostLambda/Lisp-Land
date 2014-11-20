@@ -3,7 +3,7 @@
 
 (defparameter *width* 100)
 (defparameter *height* 100)
-(defparameter *pixsize* 5)
+(defparameter *pixsize* 4) ;;One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
 
 (defparameter *cells* nil)
 (defparameter *world* nil)
@@ -78,16 +78,16 @@
     (load-ci *datafile*))
   (format t "done."))
 
-;;(defun Cel-Env (celli)
-;;  (do ((i 0 (1+ i))
-;;       (prop (nth i '(:NAC :AAC :FAC :GC)) (nth i '(:NAC :AAC :FAC :GC)))
-;;       (cprop (nth i '(:NA :AA :FA :G)) (nth i '(:NA :AA :FA :G)))
-;;       (propcont (fetch-value prop 0 *world*) (fetch-value prop 0 *world*))
-;;       (cpropcont (fetch-value cprop celli *cells*) (fetch-value cprop celli *cells*)))
-;;      ((>= i (length (fetch-props *world*))))
-;;    (let ((chance (random-range 0 100)))
-;;      (cond ((<= chance propcont) (+ (/ propcont 3) )))
-;;    ))) 
+(defun Cel-Env (celli) ;;This is mathematicly and logically flawed, revise in stage two...
+  (do ((i 0 (1+ i))
+       (prop (nth i '(:NAC :AAC :FAC :GC)) (nth i '(:NAC :AAC :FAC :GC)))
+       (cprop (nth i '(:NA :AA :FA :G)) (nth i '(:NA :AA :FA :G)))
+       (propcont (fetch-value prop 0 *world*) (fetch-value prop 0 *world*))
+       (cpropcont (fetch-value cprop celli *cells*) (fetch-value cprop celli *cells*)))
+      ((>= i (length prop)))
+    (let ((chance (random-range 0 100)) (cellperinc (+ (* (/ propcont (* 3 (* *width* *height*))) (* *width* *height*)) cpropcont))) ;;Note: 3 is a placeholder for permeability
+      (cond ((<= chance propcont) (setf cpropcont cellperinc) (setf propcont (- propcont (/ cellperinc (* *width* *height*)))))
+            (t (continue)))))) 
   
 (defun next-tick ()
   ;;(Cel-Env)
