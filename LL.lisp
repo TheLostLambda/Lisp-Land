@@ -79,15 +79,18 @@
   (format t "done."))
 
 (defun Cel-Env (celli) ;;This is mathematicly and logically flawed, revise in stage two...
-  (do ((i 0 (1+ i))
-       (prop (nth i '(:NAC :AAC :FAC :GC)) (nth i '(:NAC :AAC :FAC :GC)))
-       (cprop (nth i '(:NA :AA :FA :G)) (nth i '(:NA :AA :FA :G)))
-       (propcont (fetch-value prop 0 *world*) (fetch-value prop 0 *world*))
-       (cpropcont (fetch-value cprop celli *cells*) (fetch-value cprop celli *cells*)))
-      ((>= i (length prop)))
-    (let ((chance (random-range 0 100)) (cellperinc (+ (* (/ propcont (* 3 (* *width* *height*))) (* *width* *height*)) cpropcont))) ;;Note: 3 is a placeholder for permeability
-      (cond ((<= chance propcont) (setf cpropcont cellperinc) (setf propcont (- propcont (/ cellperinc (* *width* *height*)))))
-            (t (continue)))))) 
+  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil))
+    (do ((i 0 (1+ i)) (chance (random-range 0 100)))
+        ((>= i 4)) ;;4 is for the four main macromolicules, make more protable later...
+      
+      (setf prop (nth i '(:NAC :AAC :FAC :GC)))
+      (setf cprop (nth i '(:NA :AA :FA :G)))
+      (setf propcont (getf *world* prop))
+      (setf cpropcont (fetch-value cprop celli *cells*))
+      (setf cellperinc (+ (* (float (/ propcont (* 3 (* *width* *height*)))) (* *width* *height*)) cpropcont)) ;;Note: 3 is a placeholder for permeability
+      
+      (cond ((<= chance propcont) (setf (fetch-value cprop celli *cells*) cellperinc) (setf propcont (- propcont (/ cellperinc (* *width* *height*)))))
+            (t (continue))))))
   
 (defun next-tick ()
   ;;(Cel-Env)
