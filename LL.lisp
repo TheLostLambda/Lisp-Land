@@ -4,6 +4,7 @@
 (defparameter *width* 100)
 (defparameter *height* 100)
 (defparameter *pixsize* 4) ;;One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
+(defparameter *umperpix* 5)
 
 (defparameter *cells* nil)
 (defparameter *world* nil)
@@ -12,13 +13,13 @@
 (defun random-range (min max)
   (+ min (random (- max min) (make-random-state t))))
 
-(defun new-cell (POS ATP NA AA FA G DNA)
+(defun new-cell (POS ATP NA AA FA G O2 CO2 DNA)
   (push (list :POS POS :ATP ATP :NA NA 
-         :AA AA :FA FA :G G :DNA DNA) *cells*))
+         :AA AA :FA FA :G G :O2 O2 :CO2 CO2 :DNA DNA) *cells*))
 
-(defun new-world (TEMP PH NAC AAC FAC GC RAD BPV)
+(defun new-world (TEMP PH NAC AAC FAC GC O2C CO2C RAD BPV)
   (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
-                :AAC AAC :FAC FAC :GC GC :RAD RAD :BPV BPV)))
+                :AAC AAC :FAC FAC :GC GC :O2C O2 :CO2C CO2 :RAD RAD :BPV BPV)))
 
 (defmacro fetch-value (accessor index lst)
   `(getf (nth ,index (reverse ,lst)) ,accessor))
@@ -78,13 +79,13 @@
     (load-ci *datafile*))
   (format t "done."))
 
-(defun Cel-Env (celli) ;;This is mathematicly and logically flawed, revise in stage two...
+(defun Cell-Env (celli) ;;This is scientifically flawed, revise in stage two...
   (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil))
     (do ((i 0 (1+ i)) (chance (random-range 0 100)))
-        ((>= i 4)) ;;4 is for the four main macromolicules, make more protable later...
+        ((>= i 6)) ;;6 is for the four main macromolicules, make more portable later...
       
-      (setf prop (nth i '(:NAC :AAC :FAC :GC)))
-      (setf cprop (nth i '(:NA :AA :FA :G)))
+      (setf prop (nth i '(:NAC :AAC :FAC :GC :O2C :CO2C))) ;;make more portable later...
+      (setf cprop (nth i '(:NA :AA :FA :G :O2 :CO2))) ;;make more portable later...
       (setf propcont (getf *world* prop))
       (setf cpropcont (fetch-value cprop celli *cells*))
       (setf cellperinc (+ (* (float (/ propcont (* 3 (* *width* *height*)))) (* *width* *height*)) cpropcont)) ;;Note: 3 is a placeholder for permeability
@@ -92,18 +93,23 @@
       (cond ((<= chance propcont) (setf (fetch-value cprop celli *cells*) cellperinc) (setf propcont (- propcont (/ cellperinc (* *width* *height*)))))
             (t (continue))))))
   
+(defun Cell-Meta (celli)
+  )  
+  
 (defun next-tick ()
-  ;;(Cel-Env)
-  )
+  (dotimes (i (length *cells*))
+  (Cell-Env i)
+  (Cell-Meta)))
 
-;(defun display-sim ()
+;(defun display-sim (&optional delay)
 ;  (sdl:with-init ()
 ;  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
 ;    (setf (sdl:frame-rate) 60)
 ;    (sdl:with-events ()
 ;      (:quit-event () t)
 ;      (:idle ()
-;        ;;(next-tick)
+;        (sleep delay)
+;        (next-tick)
 ;        (dotimes (i (length *cells*))
 ;          (let ((POS (fetch-value :POS i *cells*)))
 ;                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
