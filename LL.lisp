@@ -3,7 +3,7 @@
 
 (defparameter *width* 100)
 (defparameter *height* 100)
-(defparameter *pixsize* 4) ;;One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
+(defparameter *pixsize* 4) ;;Note + TODO: One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
 (defparameter *umperpix* 5)
 
 (defparameter *cells* nil)
@@ -19,10 +19,10 @@
 
 (defun new-world (TEMP PH NAC AAC FAC GC O2C CO2C RAD BPV)
   (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
-                :AAC AAC :FAC FAC :GC GC :O2C O2 :CO2C CO2 :RAD RAD :BPV BPV)))
+                :AAC AAC :FAC FAC :GC GC :O2C O2C :CO2C CO2C :RAD RAD :BPV BPV)))
 
 (defmacro fetch-value (accessor index lst)
-  `(getf (nth ,index (reverse ,lst)) ,accessor))
+  `(getf (nth ,index ,lst) ,accessor))
   
 (defun fetch-props (lst)
   (let ((nlst nil))
@@ -77,29 +77,40 @@
   (format t "Loading simulation state and starting...~%")
   (when (probe-file *datafile*)
     (load-ci *datafile*))
-  (format t "done."))
+  (format t "Done."))
 
-(defun Cell-Env (celli) ;;This is scientifically flawed, revise in stage two...
-  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil))
+;;TODO: Add capability to expel molicules as well.
+(defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
+  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (area (* *width* *height*)))
     (do ((i 0 (1+ i)) (chance (random-range 0 100)))
-        ((>= i 6)) ;;6 is for the four main macromolicules, make more portable later...
+        ((>= i 6)) ;;Note + TODO: 6 is for the four main macromolicules plus CO2 and O2, make more portable later...
       
-      (setf prop (nth i '(:NAC :AAC :FAC :GC :O2C :CO2C))) ;;make more portable later...
-      (setf cprop (nth i '(:NA :AA :FA :G :O2 :CO2))) ;;make more portable later...
+      (setf prop (nth i '(:NAC :AAC :FAC :GC :O2C :CO2C))) ;;TODO: Make more portable later...
+      (setf cprop (nth i '(:NA :AA :FA :G :O2 :CO2))) ;;TODO: Make more portable later...
       (setf propcont (getf *world* prop))
       (setf cpropcont (fetch-value cprop celli *cells*))
-      (setf cellperinc (+ (* (float (/ propcont (* 3 (* *width* *height*)))) (* *width* *height*)) cpropcont)) ;;Note: 3 is a placeholder for permeability
+      (setf cellperinc (float (/ propcont (* 5 area)))) ;;Dummy Value: 5 is a placeholder for permeability. <<-- TODO: Revise this
       
-      (cond ((<= chance propcont) (setf (fetch-value cprop celli *cells*) cellperinc) (setf propcont (- propcont (/ cellperinc (* *width* *height*)))))
+      (cond ((<= chance (/ propcont area)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
             (t (continue))))))
   
-(defun Cell-Meta (celli)
-  )  
+(defun Cell-Meta (celli) ;;TODO: Add a way to regulate the ATP synthase
+  (cond ((> 1 0) ;;Note + TODO: This is the condition for mitochondrial resperation, revise during stage two...
+    (dotimes (i 5) ;;Dummy Value: 5 is a placeholder for the mitochondron count.
+     (cond ((and (>= (fetch-value :O2 celli *cells*) 6) (> (fetch-value :G celli *cells*) 0)) ;;Note: Aerobic Resperation C6H12O6 + 6 O2 → 6 CO2 + 6 H2O + 38 ATP. For now, Water is ignored
+           (decf (fetch-value :G celli *cells*) 1) (decf (fetch-value :O2 celli *cells*) 6)
+           (incf (fetch-value :CO2 celli *cells*) 6) (incf (fetch-value :ATP celli *cells*) 38))
+           
+           ((and (< (fetch-value :O2 celli *cells*) 6) (> (fetch-value :G celli *cells*) 0)) ;;Note: Anaerobic Resperation C6H12O6 → 2 CO2 + 2 C2H5OH + 2 ATP. For now Ethanol is ignored
+           (decf (fetch-value :G celli *cells*) 1) (incf (fetch-value :CO2 celli *cells*) 2)
+           (incf (fetch-value :ATP celli *cells*) 2)))))
+        ;;TODO: This is the condition for ATP synthase via a proton gradient.   
+        (t (format t "If you see this messsage, the laws of science have broken down.~%Now is the time for panic"))))  
   
 (defun next-tick ()
   (dotimes (i (length *cells*))
-  (Cell-Env i)
-  (Cell-Meta)))
+    (Cell-Env i)
+    (Cell-Meta i)))
 
 ;(defun display-sim (&optional delay)
 ;  (sdl:with-init ()
