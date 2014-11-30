@@ -44,7 +44,7 @@
   (dolist (entry *cells*)
     (format t "~%~{~a:~10t~a~%~}~%" entry)))
 
-(defun save-ci (filename)
+(defun save-sim (filename)
   (with-open-file (out filename
                    :direction :output
                    :if-exists :supersede)
@@ -52,7 +52,7 @@
       (print *cells* out)
       (print *world* out))))
 
-(defun load-ci (filename)
+(defun load-sim (filename)
   (with-open-file (in filename)
     (with-standard-io-syntax
       (setf *cells* (read in))
@@ -70,47 +70,72 @@
   
 (defun close-sim ()
   (format t "Saving simulation state and exiting...~%")
-  (save-ci *datafile*)
+  (save-sim *datafile*)
   (exit))
   
 (defun init-sim ()
   (format t "Loading simulation state and starting...~%")
   (when (probe-file *datafile*)
-    (load-ci *datafile*))
+    (load-sim *datafile*))
   (format t "Done."))
 
-;;TODO: Add capability to expel molicules as well.
+;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
   (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (area (* *width* *height*)))
     (do ((i 0 (1+ i)) (chance (random-range 0 100)))
-        ((>= i 6)) ;;Note + TODO: 6 is for the four main macromolicules plus CO2 and O2, make more portable later...
+        ((>= i 6)) ;;Note + TODO: 6 is for the four main macromolecules plus CO2 and O2, make more portable later...
       
       (setf prop (nth i '(:NAC :AAC :FAC :GC :O2C :CO2C))) ;;TODO: Make more portable later...
       (setf cprop (nth i '(:NA :AA :FA :G :O2 :CO2))) ;;TODO: Make more portable later...
       (setf propcont (getf *world* prop))
       (setf cpropcont (fetch-value cprop celli *cells*))
-      (setf cellperinc (float (/ propcont (* 5 area)))) ;;Dummy Value: 5 is a placeholder for permeability. <<-- TODO: Revise this
+      (setf cellperinc (/ propcont (* 5 area))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
       
       (cond ((<= chance (/ propcont area)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
             (t (continue))))))
   
-(defun Cell-Meta (celli) ;;TODO: Add a way to regulate the ATP synthase
-  (cond ((> 1 0) ;;Note + TODO: This is the condition for mitochondrial resperation, revise during stage two...
-    (dotimes (i 5) ;;Dummy Value: 5 is a placeholder for the mitochondron count.
-     (cond ((and (>= (fetch-value :O2 celli *cells*) 6) (> (fetch-value :G celli *cells*) 0)) ;;Note: Aerobic Resperation C6H12O6 + 6 O2 → 6 CO2 + 6 H2O + 38 ATP. For now, Water is ignored
-           (decf (fetch-value :G celli *cells*) 1) (decf (fetch-value :O2 celli *cells*) 6)
-           (incf (fetch-value :CO2 celli *cells*) 6) (incf (fetch-value :ATP celli *cells*) 38))
+(defun Cell-Met (celli) ;;TODO: Add a better way to regulate the ATP synthesis
+  (when (< (fetch-value :ATP celli *cells*) 1500) ;;Dummy Value: 1500 is the place-holder for max APT value.
+    (cond ((> 1 0) ;;Note + TODO: This is the condition for mitochondrial respiration, revise during stage two...
+      (dotimes (i 2) ;;Dummy Value: 2 is a place-holder for the mitochondron count.
+       (cond ((and (>= (fetch-value :O2 celli *cells*) 6) (>= (fetch-value :G celli *cells*) 1)) ;;Note: Aerobic Respiration C6H12O6 + 6 O2 → 6 CO2 + 6 H2O + 38 ATP. For now, Water is ignored
+             (decf (fetch-value :G celli *cells*) 1) (decf (fetch-value :O2 celli *cells*) 6)
+             (incf (fetch-value :CO2 celli *cells*) 6) (incf (fetch-value :ATP celli *cells*) 38))
            
-           ((and (< (fetch-value :O2 celli *cells*) 6) (> (fetch-value :G celli *cells*) 0)) ;;Note: Anaerobic Resperation C6H12O6 → 2 CO2 + 2 C2H5OH + 2 ATP. For now Ethanol is ignored
-           (decf (fetch-value :G celli *cells*) 1) (incf (fetch-value :CO2 celli *cells*) 2)
-           (incf (fetch-value :ATP celli *cells*) 2)))))
-        ;;TODO: This is the condition for ATP synthase via a proton gradient.   
-        (t (format t "If you see this messsage, the laws of science have broken down.~%Now is the time for panic"))))  
+             ((and (< (fetch-value :O2 celli *cells*) 6) (>= (fetch-value :G celli *cells*) 1)) ;;Note: Anaerobic Respiration C6H12O6 → 2 CO2 + 2 C2H5OH + 2 ATP. For now Ethanol is ignored
+             (decf (fetch-value :G celli *cells*) 1) (incf (fetch-value :CO2 celli *cells*) 2)
+             (incf (fetch-value :ATP celli *cells*) 2)))))
+         ;;TODO: This is the condition for ATP synthesis via a proton gradient.   
+         (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))  
+  
+(defun Cell-Loc (celli) ;;Note: This is the function for cellular locomotion.
+  (let ((x (car (fetch-value :POS celli *cells*))) (y (cdr (fetch-value :POS celli *cells*))) 
+        (dir (random-range 1 33))) ;;TODO: Find a more realistic and controlled method of locomotion.
+    (when (and (>= (fetch-value :ATP celli *cells*) 25) (<= dir 8)) ;;Dummy Value: 25 is ATP cost for movement.
+	  (decf (fetch-value :ATP celli *cells*) 25) ;;Dummy Value: 25 is ATP cost for movement.
+	  (cond ((= dir 1) (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))
+	        ((= dir 2) (setf (car (fetch-value :POS celli *cells*)) (mod (1+ x) *width*))
+		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))
+		    ((= dir 3) (setf (car (fetch-value :POS celli *cells*)) (mod (1+ x) *width*)))
+		    ((= dir 4) (setf (car (fetch-value :POS celli *cells*)) (mod (1+ x) *width*))
+		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1- y) *height*)))
+		    ((= dir 5) (setf (cdr (fetch-value :POS celli *cells*)) (mod (1- y) *height*)))
+		    ((= dir 6) (setf (car (fetch-value :POS celli *cells*)) (mod (1- x) *width*))
+		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1- y) *height*)))
+		    ((= dir 7) (setf (car (fetch-value :POS celli *cells*)) (mod (1- x) *width*)))
+		    ((= dir 8) (setf (car (fetch-value :POS celli *cells*)) (mod (1- x) *width*))
+		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))))))  
+  
+(defun Cell-Rep (celli)
+  )
   
 (defun next-tick ()
   (dotimes (i (length *cells*))
     (Cell-Env i)
-    (Cell-Meta i)))
+    (Cell-Met i)
+	(Cell-Loc i)
+	;(Cell-Rep 1)
+	))
 
 ;(defun display-sim (&optional delay)
 ;  (sdl:with-init ()
