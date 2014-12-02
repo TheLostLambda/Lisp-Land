@@ -108,9 +108,8 @@
          ;;TODO: This is the condition for ATP synthesis via a proton gradient.   
          (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))  
   
-(defun Cell-Loc (celli) ;;Note: This is the function for cellular locomotion.
-  (let ((x (car (fetch-value :POS celli *cells*))) (y (cdr (fetch-value :POS celli *cells*))) 
-        (dir (random-range 1 33))) ;;TODO: Find a more realistic and controlled method of locomotion.
+(defun Cell-Loc (celli &optional (dir (random-range 1 33))) ;;Note: This is the function for cellular locomotion.
+  (let ((x (car (fetch-value :POS celli *cells*))) (y (cdr (fetch-value :POS celli *cells*)))) ;;TODO: Find a more realistic and controlled method of locomotion.
     (when (and (>= (fetch-value :ATP celli *cells*) 25) (<= dir 8)) ;;Dummy Value: 25 is ATP cost for movement.
 	  (decf (fetch-value :ATP celli *cells*) 25) ;;Dummy Value: 25 is ATP cost for movement.
 	  (cond ((= dir 1) (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))
@@ -127,7 +126,16 @@
 		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))))))  
   
 (defun Cell-Rep (celli)
-  )
+  (let ((ATP (/ (- (fetch-value :ATP celli *cells*) 1000) 2))
+        (NA (/ (fetch-value :NA celli *cells*) 2))
+        (AA (/ (fetch-value :AA celli *cells*) 2))
+        (FA (/ (fetch-value :FA celli *cells*) 2))
+        (G (/ (fetch-value :G celli *cells*) 2))
+        (O2 (/ (fetch-value :O2 celli *cells*) 2))
+        (CO2 (/ (fetch-value :CO2 celli *cells*) 2)))
+  (when (>= (fetch-value :ATP celli *cells*) 1500)
+    (setf (fetch-value :ATP celli *cells*) ATP)
+    (setf (fetch-value :NA celli *cells*) NA))))
   
 (defun next-tick ()
   (dotimes (i (length *cells*))
