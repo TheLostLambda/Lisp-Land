@@ -89,7 +89,7 @@
       (setf cprop (nth i '(:NA :AA :FA :G :O2 :CO2))) ;;TODO: Make more portable later...
       (setf propcont (getf *world* prop))
       (setf cpropcont (fetch-value cprop celli *cells*))
-      (setf cellperinc (/ propcont (* 5 area))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
+      (setf cellperinc (float (/ propcont (* 5 area)))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
       
       (cond ((<= chance (/ propcont area)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
             (t (continue))))))
@@ -108,41 +108,51 @@
          ;;TODO: This is the condition for ATP synthesis via a proton gradient.   
          (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))  
   
-(defun Cell-Loc (celli &optional (dir (random-range 1 33))) ;;Note: This is the function for cellular locomotion.
+(defun Cell-Loc (celli &optional (dir (random 33 (make-random-state t)))) ;;Note: This is the function for cellular locomotion.
   (let ((x (car (fetch-value :POS celli *cells*))) (y (cdr (fetch-value :POS celli *cells*)))) ;;TODO: Find a more realistic and controlled method of locomotion.
     (when (and (>= (fetch-value :ATP celli *cells*) 25) (<= dir 8)) ;;Dummy Value: 25 is ATP cost for movement.
 	  (decf (fetch-value :ATP celli *cells*) 25) ;;Dummy Value: 25 is ATP cost for movement.
-	  (cond ((= dir 1) (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))
-	        ((= dir 2) (setf (car (fetch-value :POS celli *cells*)) (mod (1+ x) *width*))
-		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))
-		    ((= dir 3) (setf (car (fetch-value :POS celli *cells*)) (mod (1+ x) *width*)))
-		    ((= dir 4) (setf (car (fetch-value :POS celli *cells*)) (mod (1+ x) *width*))
-		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1- y) *height*)))
-		    ((= dir 5) (setf (cdr (fetch-value :POS celli *cells*)) (mod (1- y) *height*)))
-		    ((= dir 6) (setf (car (fetch-value :POS celli *cells*)) (mod (1- x) *width*))
-		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1- y) *height*)))
-		    ((= dir 7) (setf (car (fetch-value :POS celli *cells*)) (mod (1- x) *width*)))
-		    ((= dir 8) (setf (car (fetch-value :POS celli *cells*)) (mod (1- x) *width*))
-		               (setf (cdr (fetch-value :POS celli *cells*)) (mod (1+ y) *height*)))))))  
+	  (cond ((= dir 1) (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))
+	        ((= dir 2) (setf (fetch-value :POS celli *cells*) (cons (mod (1+ x) *width*) y))
+		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))
+		    ((= dir 3) (setf (fetch-value :POS celli *cells*) (cons (mod (1+ x) *width*) y)))
+		    ((= dir 4) (setf (fetch-value :POS celli *cells*) (cons (mod (1+ x) *width*) y))
+		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1- y) *height*))))
+		    ((= dir 5) (setf (fetch-value :POS celli *cells*) (cons x (mod (1- y) *height*))))
+		    ((= dir 6) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y))
+		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1- y) *height*))))
+		    ((= dir 7) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y)))
+		    ((= dir 8) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y))
+		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))))))  
   
 (defun Cell-Rep (celli)
-  (let ((ATP (/ (- (fetch-value :ATP celli *cells*) 1000) 2))
-        (NA (/ (fetch-value :NA celli *cells*) 2))
-        (AA (/ (fetch-value :AA celli *cells*) 2))
-        (FA (/ (fetch-value :FA celli *cells*) 2))
-        (G (/ (fetch-value :G celli *cells*) 2))
-        (O2 (/ (fetch-value :O2 celli *cells*) 2))
-        (CO2 (/ (fetch-value :CO2 celli *cells*) 2)))
   (when (>= (fetch-value :ATP celli *cells*) 1500)
-    (setf (fetch-value :ATP celli *cells*) ATP)
-    (setf (fetch-value :NA celli *cells*) NA))))
+    (let ((POS (fetch-value :POS celli *cells*))
+          (ATP (float (/ (- (fetch-value :ATP celli *cells*) 1000) 2)))
+          (NA (float (/ (fetch-value :NA celli *cells*) 2)))
+          (AA (float (/ (fetch-value :AA celli *cells*) 2)))
+          (FA (float (/ (fetch-value :FA celli *cells*) 2)))
+          (G (float (/ (fetch-value :G celli *cells*) 2)))
+          (O2 (float (/ (fetch-value :O2 celli *cells*) 2)))
+          (CO2 (float (/ (fetch-value :CO2 celli *cells*) 2)))
+          (DNA (fetch-value :DNA celli *cells*)))
+  
+      (setf (fetch-value :ATP celli *cells*) ATP)
+      (setf (fetch-value :NA celli *cells*) NA)
+      (setf (fetch-value :AA celli *cells*) AA)
+      (setf (fetch-value :FA celli *cells*) FA)
+      (setf (fetch-value :G celli *cells*) G)
+      (setf (fetch-value :O2 celli *cells*) O2)
+      (setf (fetch-value :CO2 celli *cells*) CO2)
+      (new-cell POS ATP NA AA FA G O2 CO2 DNA)
+      (Cell-Loc 0 (random 9 (make-random-state t))))))
   
 (defun next-tick ()
   (dotimes (i (length *cells*))
     (Cell-Env i)
     (Cell-Met i)
 	(Cell-Loc i)
-	;(Cell-Rep 1)
+	(Cell-Rep i)
 	))
 
 ;(defun display-sim (&optional delay)
