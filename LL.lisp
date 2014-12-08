@@ -1,5 +1,11 @@
-;(ql:quickload 'lispbuilder-sdl)
-;(ql:quickload 'lispbuilder-sdl-gfx)
+;;Stage 1: Implement Characteristics of Life (2 weeks)
+;;Stage 1.5: Add complementary functions (2 weeks)
+;;Stage 2: Add in realism and research (6-7 weeks)
+;;Stage 3: Beautify and refine code (1-2 weeks)
+
+
+(ql:quickload 'lispbuilder-sdl)
+(ql:quickload 'lispbuilder-sdl-gfx)
 
 (defparameter *width* 100)
 (defparameter *height* 100)
@@ -8,18 +14,24 @@
 
 (defparameter *cells* nil)
 (defparameter *world* nil)
+(defparameter *generation* 0)
 (defparameter *datafile* "Celldata.db")
+
 
 (defun random-range (min max)
   (+ min (random (- max min) (make-random-state t))))
 
-(defun new-cell (POS ATP NA AA FA G O2 CO2 DNA)
-  (push (list :POS POS :ATP ATP :NA NA 
-         :AA AA :FA FA :G G :O2 O2 :CO2 CO2 :DNA DNA) *cells*))
+(defun remove-nth (n lst) ;;TODO: Make iterative in stage three.
+  (if (or (zerop n) (null lst))
+      (cdr lst)
+      (cons (car lst) (remove-nth (1- n) (cdr lst)))))
 
-(defun new-world (TEMP PH NAC AAC FAC GC O2C CO2C RAD BPV)
-  (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
-                :AAC AAC :FAC FAC :GC GC :O2C O2C :CO2C CO2C :RAD RAD :BPV BPV)))
+(defmacro dotimes-dec (var-and-limit &rest body)
+  (let ((var (first var-and-limit))
+        (limit (second var-and-limit)))
+  `(do ((,var (1- ,limit) (1- ,var)))
+       ((<= ,var -1))
+    ,@body)))
 
 (defmacro fetch-value (accessor index lst)
   `(getf (nth ,index ,lst) ,accessor))
@@ -30,6 +42,14 @@
         ((>= i (length lst)))
       (push (nth i lst) nlst)) (reverse nlst)))  
 
+(defun new-cell (POS ATP NA AA FA G O2 CO2 DNA)
+  (push (list :POS POS :ATP ATP :NA NA 
+         :AA AA :FA FA :G G :O2 O2 :CO2 CO2 :DNA DNA :HP 100) *cells*))
+
+(defun new-world (TEMP PH NAC AAC FAC GC O2C CO2C RAD BPV)
+  (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
+                :AAC AAC :FAC FAC :GC GC :O2C O2C :CO2C CO2C :RAD RAD :BPV BPV)))
+                
 (defun parse-gene (gene)
   (let ((gene-val 0))
     (dotimes (i (length gene))
@@ -78,6 +98,20 @@
   (when (probe-file *datafile*)
     (load-sim *datafile*))
   (format t "Done."))
+  
+(defun Cell-Apo (celli) ;;Note: Function for cellular death and anything HP related.
+  (if (<= (fetch-value :HP celli *cells*) 0)
+      (progn ;;TODO: Once 'CEll-Env' can expel molecules, replace this code with a 'Cell-Env' call.
+      (incf (getf *world* :NAC) (fetch-value :NA celli *cells*))
+      (incf (getf *world* :AAC) (fetch-value :AA celli *cells*))
+      (incf (getf *world* :FAC) (fetch-value :FA celli *cells*))
+      (incf (getf *world* :GC) (fetch-value :G celli *cells*))
+      (incf (getf *world* :O2C) (fetch-value :O2 celli *cells*))
+      (incf (getf *world* :CO2C) (fetch-value :CO2 celli *cells*))
+      (setf *cells* (remove-nth celli *cells*)))
+      ;;TODO: Put other HP effecting conditions here...
+      (decf (fetch-value :HP celli *cells*) 1) ;;Note: Cell aging condition.
+      ))  
 
 ;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
@@ -148,26 +182,34 @@
       (Cell-Loc 0 (random 9 (make-random-state t))))))
   
 (defun next-tick ()
-  (dotimes (i (length *cells*))
-    (Cell-Env i)
-    (Cell-Met i)
-	(Cell-Loc i)
-	(Cell-Rep i)
-	))
+  (incf *generation* 1)
 
-;(defun display-sim (&optional delay)
-;  (sdl:with-init ()
-;  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
-;    (setf (sdl:frame-rate) 60)
-;    (sdl:with-events ()
-;      (:quit-event () t)
-;      (:idle ()
-;        (sleep delay)
-;        (next-tick)
-;        (dotimes (i (length *cells*))
-;          (let ((POS (fetch-value :POS i *cells*)))
-;                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
-;                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
-;        (sdl:update-display)))))
+  (dotimes-dec (i (length *cells*))
+    (Cell-Env i))
+  (dotimes-dec (i (length *cells*))
+    (Cell-Met i))
+  (dotimes-dec (i (length *cells*))
+	(Cell-Loc i))
+  (dotimes-dec (i (length *cells*))
+	(Cell-Rep i))
+  (dotimes-dec (i (length *cells*))
+	(Cell-Apo i))
+	)
+
+(defun display-sim (&optional (delay 0))
+  (sdl:with-init ()
+  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
+    (setf (sdl:frame-rate) 60)
+    (sdl:with-events ()
+      (:quit-event () t)
+      (:idle ()
+        (sleep delay)
+        (next-tick)
+        (sdl:clear-display sdl:*black*)
+        (dotimes (celli (length *cells*))
+          (let ((POS (fetch-value :POS celli *cells*)))
+                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
+                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
+        (sdl:update-display)))))
 
 (init-sim)
