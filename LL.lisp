@@ -3,6 +3,7 @@
 ;;Stage 2: Add in realism and research (6-7 weeks)
 ;;Stage 3: Beautify and refine code (1-2 weeks)
 
+;;;; Current Task: Uber DNA Reader Function
 
 (ql:quickload 'lispbuilder-sdl)
 (ql:quickload 'lispbuilder-sdl-gfx)
@@ -10,8 +11,8 @@
 (defparameter *width* 100)
 (defparameter *height* 100)
 (defparameter *pixsize* 4) ;;Note + TODO: One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
-(defparameter *umperpix* 5)
-
+(defparameter *umperpix* 20) ;;TODO: Use this in stage two to create a correctly scaled measure of size.
+(defparameter *cellHP* 150)
 (defparameter *cells* nil)
 (defparameter *world* nil)
 (defparameter *generation* 0)
@@ -44,7 +45,7 @@
 
 (defun new-cell (POS ATP NA AA FA G O2 CO2 DNA)
   (push (list :POS POS :ATP ATP :NA NA 
-         :AA AA :FA FA :G G :O2 O2 :CO2 CO2 :DNA DNA :HP 100) *cells*))
+         :AA AA :FA FA :G G :O2 O2 :CO2 CO2 :DNA DNA :HP *cellHP*) *cells*))
 
 (defun new-world (TEMP PH NAC AAC FAC GC O2C CO2C RAD BPV)
   (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
@@ -142,6 +143,7 @@
          ;;TODO: This is the condition for ATP synthesis via a proton gradient.   
          (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))  
   
+;;TODO: Prevent cells from overlapping  
 (defun Cell-Loc (celli &optional (dir (random 33 (make-random-state t)))) ;;Note: This is the function for cellular locomotion.
   (let ((x (car (fetch-value :POS celli *cells*))) (y (cdr (fetch-value :POS celli *cells*)))) ;;TODO: Find a more realistic and controlled method of locomotion.
     (when (and (>= (fetch-value :ATP celli *cells*) 25) (<= dir 8)) ;;Dummy Value: 25 is ATP cost for movement.
@@ -196,7 +198,7 @@
 	(Cell-Apo i))
 	)
 
-(defun display-sim (&optional (delay 0))
+(defun autoplay-sim (&optional (delay 0))
   (sdl:with-init ()
   (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
     (setf (sdl:frame-rate) 60)
