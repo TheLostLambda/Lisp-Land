@@ -24,7 +24,7 @@ What "Genes" code for what?
 This is one of the most important features in Lisp-Life, the dynamic genetics system.
 
 #####Gene 1 - Primary Membrane composition:
-Determines permeability of the membrane (Least to most permeable). Slot 31 is unused
-* Phospholipids (purely saturated) [1-10]
-* Phospholipids (mixed) [11-20]
-* Free fatty acids. [21-30]
+Determines permeability of the membrane (1-10). Slot 31 is unused
+* Phospholipids (purely saturated) [1-10] = 10
+* Phospholipids (mixed) [11-20] = 5
+* Free fatty acids. [21-30] = 2
