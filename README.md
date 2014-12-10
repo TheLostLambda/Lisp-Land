@@ -24,13 +24,13 @@ What "Genes" code for what?
 This is one of the most important features in Lisp-Life, the dynamic genetics system.
 
 #####Gene 1 - Primary Membrane Composition:
-Determines permeability of the membrane (Integer 1-10) Slot 31 unused.
-* Phospholipids (purely saturated) [1-10] = Perm:5
-* Phospholipids (mixed) [11-20] = Perm:4
-* Free fatty acids [21-30] = Perm:3
+Determines permeability of the membrane (Integer 1-10) Slots 30-31 unused.
+* Phospholipids (purely saturated) [0-9] = Perm:5
+* Phospholipids (mixed) [10-19] = Perm:4
+* Free fatty acids [20-29] = Perm:3
 
 #####Gene 2 - Mechanisms For Photosynthesis:
-Determines the presence of chlorophyll and packaged form (Integer 1-3) Slot 31 unused.
-* No Chlorophyll [1-10] = Chlorop:1
-* Free Chlorophyll [11-20] = Chlorop:2
-* Chloroplasts [21-30] = Chlorop:3
+Determines the presence of chlorophyll and packaged form (Integer 1-3) Slots 30-31 unused.
+* No Chlorophyll [0-9] = Chlorop:1
+* Free Chlorophyll [10-19] = Chlorop:2
+* Chloroplasts [20-29] = Chlorop:3
