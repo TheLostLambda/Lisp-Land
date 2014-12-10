@@ -19,6 +19,9 @@
 (defparameter *datafile* "Celldata.db")
 
 
+(defun btwn (x min max)
+  (and (>= x min) (<= x max)))
+
 (defun random-range (min max)
   (+ min (random (- max min) (make-random-state t))))
 
@@ -40,7 +43,7 @@
 (defun fetch-props (lst)
   (let ((nlst nil))
     (do ((i 0 (+ i 2)))
-        ((>= i (length lst)))
+        ((>= i (length lst))) ;;TODO: Modify to deal with non-sequences in stage 3.
       (push (nth i lst) nlst)) (reverse nlst)))  
 
 (defun new-cell (POS ATP NA AA FA G O2 CO2 DNA)
@@ -96,6 +99,7 @@
   
 (defun init-sim ()
   (format t "Loading simulation state and starting...~%")
+  (load "GeneR.lisp")
   (when (probe-file *datafile*)
     (load-sim *datafile*))
   (format t "Done."))
