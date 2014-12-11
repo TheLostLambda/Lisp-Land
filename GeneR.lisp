@@ -14,5 +14,5 @@
 
 (defun GeneR (celli var)
   (cond ((equal var 'chlorop)
-    (let ))
-  ))
+    (let ((Chlorop 0))
+      (incf Chlorop (G0 celli var)) Chlorop))))
