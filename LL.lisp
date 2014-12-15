@@ -50,9 +50,9 @@
   (push (list :POS POS :ATP ATP :NA NA 
          :AA AA :FA FA :G G :O2 O2 :CO2 CO2 :DNA DNA :HP *cellHP*) *cells*))
 
-(defun new-world (TEMP PH NAC AAC FAC GC O2C CO2C RAD BPV)
-  (setf *world* (list :TEMP TEMP :PH PH :NAC NAC 
-                :AAC AAC :FAC FAC :GC GC :O2C O2C :CO2C CO2C :RAD RAD :BPV BPV)))
+(defun new-world (TEMP PH NAC AAC FAC GC O2C CO2C RAD BPV LUX)
+  (setf *world* (list :TEMP TEMP :PH PH :NAC NAC :AAC AAC :FAC FAC :GC GC
+                      :O2C O2C :CO2C CO2C :RAD RAD :BPV BPV :LUX LUX)))
                 
 (defun parse-gene (gene)
   (let ((gene-val 0))
@@ -106,7 +106,7 @@
   
 (defun Cell-Apo (celli) ;;Note: Function for cellular death and anything HP related.
   (if (<= (fetch-value :HP celli *cells*) 0)
-      (progn ;;TODO: Once 'CEll-Env' can expel molecules, replace this code with a 'Cell-Env' call.
+      (progn ;;TODO: Once 'Cell-Env' can expel molecules, replace this code with a 'Cell-Env' call.
       (incf (getf *world* :NAC) (fetch-value :NA celli *cells*))
       (incf (getf *world* :AAC) (fetch-value :AA celli *cells*))
       (incf (getf *world* :FAC) (fetch-value :FA celli *cells*))
@@ -121,7 +121,7 @@
 ;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
   (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (area (* *width* *height*)))
-    (do ((i 0 (1+ i)) (chance (random-range 0 100)))
+    (do ((i 0 (1+ i)))
         ((>= i 6)) ;;Note + TODO: 6 is for the four main macromolecules plus CO2 and O2, make more portable later...
       
       (setf prop (nth i '(:NAC :AAC :FAC :GC :O2C :CO2C))) ;;TODO: Make more portable later...
@@ -129,23 +129,32 @@
       (setf propcont (getf *world* prop))
       (setf cpropcont (fetch-value cprop celli *cells*))
       (setf cellperinc (float (/ propcont (* 5 area)))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
+      (setf cellperdec (float (/ cpropcont 5 ))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
       
-      (cond ((<= chance (/ propcont area)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
+      (cond ((< cpropcont (/ propcont area)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
+            ((> cpropcont (/ propcont area)) (setf (fetch-value cprop celli *cells*) (- cpropcont cellperdec)) (setf (getf *world* prop) (+ propcont cellperdec)))
             (t (continue))))))
+            
+(defun Cell-Pho (celli) ;;TODO: Incorperate Lux into the photosynthesis process.
+  (when (> (GeneR celli 'chlorop) 1)
+    (cond ((> 1 0)
+      (dotimes (i 4) ;;Dummy Value: 4 is a place-holder for the chloroplast count.
+        ())) ;;Note: Photosynthesis 6 CO2 + 6 H2O → C6H12O6 + 6 O2. For now, Water is ignored
+      (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))
   
 (defun Cell-Met (celli) ;;TODO: Add a better way to regulate the ATP synthesis
   (when (< (fetch-value :ATP celli *cells*) 1500) ;;Dummy Value: 1500 is the place-holder for max APT value.
     (cond ((> 1 0) ;;Note + TODO: This is the condition for mitochondrial respiration, revise during stage two...
       (dotimes (i 2) ;;Dummy Value: 2 is a place-holder for the mitochondron count.
        (cond ((and (>= (fetch-value :O2 celli *cells*) 6) (>= (fetch-value :G celli *cells*) 1)) ;;Note: Aerobic Respiration C6H12O6 + 6 O2 → 6 CO2 + 6 H2O + 38 ATP. For now, Water is ignored
-             (decf (fetch-value :G celli *cells*) 1) (decf (fetch-value :O2 celli *cells*) 6)
-             (incf (fetch-value :CO2 celli *cells*) 6) (incf (fetch-value :ATP celli *cells*) 38))
+         (decf (fetch-value :G celli *cells*) 1) (decf (fetch-value :O2 celli *cells*) 6)
+         (incf (fetch-value :CO2 celli *cells*) 6) (incf (fetch-value :ATP celli *cells*) 38))
            
              ((and (< (fetch-value :O2 celli *cells*) 6) (>= (fetch-value :G celli *cells*) 1)) ;;Note: Anaerobic Respiration C6H12O6 → 2 CO2 + 2 C2H5OH + 2 ATP. For now Ethanol is ignored
-             (decf (fetch-value :G celli *cells*) 1) (incf (fetch-value :CO2 celli *cells*) 2)
-             (incf (fetch-value :ATP celli *cells*) 2)))))
-         ;;TODO: This is the condition for ATP synthesis via a proton gradient.   
-         (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))  
+         (decf (fetch-value :G celli *cells*) 1) (incf (fetch-value :CO2 celli *cells*) 2)
+         (incf (fetch-value :ATP celli *cells*) 2)))))
+      ;;TODO: This is the condition for ATP synthesis via a proton gradient.   
+      (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))  
   
 ;;TODO: Prevent cells from overlapping  
 (defun Cell-Loc (celli &optional (dir (random 33 (make-random-state t)))) ;;Note: This is the function for cellular locomotion.
