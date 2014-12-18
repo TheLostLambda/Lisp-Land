@@ -3,7 +3,7 @@
 ;;Stage 2: Add in realism and research (6-7 weeks)
 ;;Stage 3: Beautify and refine code (1-2 weeks)
 
-;;;; Current Task: Uber DNA Reader Function
+;;;; Current Task: Viral Attack Function
 
 ;(ql:quickload 'lispbuilder-sdl)
 ;(ql:quickload 'lispbuilder-sdl-gfx)
@@ -118,6 +118,12 @@
       (decf (fetch-value :HP celli *cells*) 1) ;;Note: Cell aging condition.
       ))  
 
+(defun Cell-Vir (celli) ;;Note + TODO: Viruses are pretty crazy, there is a lot to do here, revise in stage two...
+  (let ((cellbpvinc (truncate (float (/ (getf *world* :BPV) (* (* *width* *height*) 5))))))
+    (dotimes (i cellbpvinc)
+      (decf (fetch-value :HP celli *cells*) 10)
+      (incf (getf *world* :BPV) 1))))
+
 ;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
   (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (area (* *width* *height*)))
@@ -139,7 +145,9 @@
   (when (> (GeneR celli 'chlorop) 1)
     (cond ((> 1 0)
       (dotimes (i 4) ;;Dummy Value: 4 is a place-holder for the chloroplast count.
-        ())) ;;Note: Photosynthesis 6 CO2 + 6 H2O → C6H12O6 + 6 O2. For now, Water is ignored
+        (when (and (> (fetch-value :CO2 celli *cells*) 6) (> (fetch-value :O2 celli *cells*) 6))
+        (decf (fetch-value :CO2 celli *cells*) 6) (incf (fetch-value :O2 celli *cells*) 6)
+        (incf (fetch-value :G celli *cells*) 1)))) ;;Note: Photosynthesis 6 CO2 + 6 H2O → C6H12O6 + 6 O2. For now, Water is ignored
       (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))
   
 (defun Cell-Met (celli) ;;TODO: Add a better way to regulate the ATP synthesis
@@ -157,7 +165,7 @@
       (t (format t "If you see this message, the laws of science have broken down.~%Now is the time for panic")))))  
   
 ;;TODO: Prevent cells from overlapping  
-(defun Cell-Loc (celli &optional (dir (random 33 (make-random-state t)))) ;;Note: This is the function for cellular locomotion.
+(defun Cell-Loc (celli &optional (dir (random 33 (make-random-state t)))) ;;Note + Dummy Value: This is the function for cellular locomotion. 
   (let ((x (car (fetch-value :POS celli *cells*))) (y (cdr (fetch-value :POS celli *cells*)))) ;;TODO: Find a more realistic and controlled method of locomotion.
     (when (and (>= (fetch-value :ATP celli *cells*) 25) (<= dir 8)) ;;Dummy Value: 25 is ATP cost for movement.
 	  (decf (fetch-value :ATP celli *cells*) 25) ;;Dummy Value: 25 is ATP cost for movement.
@@ -173,6 +181,10 @@
 		    ((= dir 7) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y)))
 		    ((= dir 8) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y))
 		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))))))  
+  
+(defun Cell-Mut (celli)
+  (when (<= (random-range 1 101) (getf *world* :RAD))
+    (rand-mutate (fetch-value :DNA celli *cells*))))
   
 (defun Cell-Rep (celli)
   (when (>= (fetch-value :ATP celli *cells*) 1500)
@@ -202,9 +214,13 @@
   (dotimes-dec (i (length *cells*))
     (Cell-Env i))
   (dotimes-dec (i (length *cells*))
+	(Cell-Pho i))
+  (dotimes-dec (i (length *cells*))
     (Cell-Met i))
   (dotimes-dec (i (length *cells*))
 	(Cell-Loc i))
+  (dotimes-dec (i (length *cells*))
+	(Cell-Mut i))
   (dotimes-dec (i (length *cells*))
 	(Cell-Rep i))
   (dotimes-dec (i (length *cells*))
