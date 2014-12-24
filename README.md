@@ -5,7 +5,7 @@ Artificial life simulation in Lisp
 
 ###Project Goals:
 * Create a realistic environment that life can interact with, and be influenced by.
-* Possibility for single and multicellular organisms.
+* Possibility for many singlecellular organisms, as well as a range of viruses.
 * Realistic genetics system, support for mutation, inheritance, and evolution.
 
 Idea/Method
