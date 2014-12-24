@@ -1,12 +1,12 @@
-;;Stage 1: Implement Characteristics of Life (2 weeks)
-;;Stage 1.5: Add complementary functions (2 weeks)
-;;Stage 2: Add in realism and research (6-7 weeks)
-;;Stage 3: Beautify and refine code (1-2 weeks)
+;;Stage 1: Implement Characteristics of Life (2 weeks) : DONE
+;;Stage 1.5: Add complementary functions (2 weeks) : DONE
+;;Stage 2: Add in realism and research (6-7 weeks) : IN PROGRESS
+;;Stage 3: Beautify and refine code (1-2 weeks) : TODO
 
 ;;;; Current Task: Viral Attack Function
 
-;(ql:quickload 'lispbuilder-sdl)
-;(ql:quickload 'lispbuilder-sdl-gfx)
+(ql:quickload 'lispbuilder-sdl)
+(ql:quickload 'lispbuilder-sdl-gfx)
 
 (defparameter *width* 100)
 (defparameter *height* 100)
@@ -118,15 +118,20 @@
       (decf (fetch-value :HP celli *cells*) 1) ;;Note: Cell aging condition.
       ))  
 
+;; Critical Bug: This system makes it entirely impossible to be infected unless the virus density is above 10,000.
+;; This is unrealistic, to fix this: BPVP = 100(BPVC / Area), Chance = random 0-100, CPS = truncate(BPVP/100),
+;; NBPVP = BPVP - 100(CPS), if NBPVP <= Chance do: CPS = CPS + 1, for each CPS do: SChance = random 1-Perm and if
+;; SChance = 1 do: Cell Virus Count + 1
+;; Also impliment this system in 'Cell-Env' 
 (defun Cell-Vir (celli) ;;Note + TODO: Viruses are pretty crazy, there is a lot to do here, revise in stage two...
-  (let ((cellbpvinc (truncate (float (/ (getf *world* :BPV) (* (* *width* *height*) 5))))))
+  (let ((cellbpvinc (truncate (float (/ (getf *world* :BPV) (* (* *width* *height*) 5)))))) ;;Dummy Value: 5 is a place-holder for permeability.
     (dotimes (i cellbpvinc)
       (decf (fetch-value :HP celli *cells*) 10)
       (incf (getf *world* :BPV) 1))))
 
 ;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
-  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (area (* *width* *height*)))
+  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (cellperdec nil) (area (* *width* *height*)))
     (do ((i 0 (1+ i)))
         ((>= i 6)) ;;Note + TODO: 6 is for the four main macromolecules plus CO2 and O2, make more portable later...
       
@@ -227,20 +232,20 @@
 	(Cell-Apo i))
 	)
 
-;(defun autoplay-sim (&optional (delay 0))
-;  (sdl:with-init ()
-;  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
-;    (setf (sdl:frame-rate) 60)
-;    (sdl:with-events ()
-;      (:quit-event () t)
-;      (:idle ()
-;        (sleep delay)
-;        (next-tick)
-;        (sdl:clear-display sdl:*black*)
-;        (dotimes (celli (length *cells*))
-;          (let ((POS (fetch-value :POS celli *cells*)))
-;                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
-;                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
-;        (sdl:update-display)))))
+(defun autoplay-sim (&optional (delay 0))
+  (sdl:with-init ()
+  (sdl:window (* *pixsize* *width*) (* *pixsize* *height*) :title-caption "Lisp Land")
+    (setf (sdl:frame-rate) 60)
+    (sdl:with-events ()
+      (:quit-event () t)
+      (:idle ()
+        (sleep delay)
+        (next-tick)
+        (sdl:clear-display sdl:*black*)
+        (dotimes (celli (length *cells*))
+          (let ((POS (fetch-value :POS celli *cells*)))
+                  (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
+                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
+        (sdl:update-display)))))
 
 (init-sim)
