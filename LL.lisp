@@ -3,13 +3,14 @@
 ;;Stage 2: Add in realism and research (6-7 weeks) : IN PROGRESS
 ;;Stage 3: Beautify and refine code (1-2 weeks) : TODO
 
-;;;; Current Task: Viral Attack Function
+;;;; Current Task: Revision of Cellular Diffusion
 
 (ql:quickload 'lispbuilder-sdl)
 (ql:quickload 'lispbuilder-sdl-gfx)
 
 (defparameter *width* 100)
 (defparameter *height* 100)
+(defparameter *area* (* *width* *height*))
 (defparameter *pixsize* 4) ;;Note + TODO: One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
 (defparameter *umperpix* 20) ;;TODO: Use this in stage two to create a correctly scaled measure of size.
 (defparameter *cellHP* 150)
@@ -124,14 +125,20 @@
 ;; SChance = 1 do: Cell Virus Count + 1
 ;; Also impliment this system in 'Cell-Env' 
 (defun Cell-Vir (celli) ;;Note + TODO: Viruses are pretty crazy, there is a lot to do here, revise in stage two...
-  (let ((cellbpvinc (truncate (float (/ (getf *world* :BPV) (* (* *width* *height*) 5)))))) ;;Dummy Value: 5 is a place-holder for permeability.
-    (dotimes (i cellbpvinc)
+  (let ((BPVP nil) (Chance nil) (CPS nil) (NBPVP nil)) ;;Dummy Value: 5 is a place-holder for permeability.
+    (setf BPVP (* (/ (getf *world* :BPV) *area*) 100))
+    (setf Chance (random-range 1 101))
+    (setf CPS (truncate (/ BPVP 100)))
+    (setf NBPVP (- BPVP (* CPS 100)))
+    (when (<= NBPVP Chance) (incf CPS 1))
+    
+    (dotimes (i CPS)
       (decf (fetch-value :HP celli *cells*) 10)
       (incf (getf *world* :BPV) 1))))
 
 ;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
-  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (cellperdec nil) (area (* *width* *height*)))
+  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (cellperdec nil))
     (do ((i 0 (1+ i)))
         ((>= i 6)) ;;Note + TODO: 6 is for the four main macromolecules plus CO2 and O2, make more portable later...
       
@@ -139,11 +146,11 @@
       (setf cprop (nth i '(:NA :AA :FA :G :O2 :CO2))) ;;TODO: Make more portable later...
       (setf propcont (getf *world* prop))
       (setf cpropcont (fetch-value cprop celli *cells*))
-      (setf cellperinc (float (/ propcont (* 5 area)))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
+      (setf cellperinc (float (/ propcont (* 5 *area*)))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
       (setf cellperdec (float (/ cpropcont 5 ))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
       
-      (cond ((< cpropcont (/ propcont area)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
-            ((> cpropcont (/ propcont area)) (setf (fetch-value cprop celli *cells*) (- cpropcont cellperdec)) (setf (getf *world* prop) (+ propcont cellperdec)))
+      (cond ((< cpropcont (/ propcont *area*)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
+            ((> cpropcont (/ propcont *area*)) (setf (fetch-value cprop celli *cells*) (- cpropcont cellperdec)) (setf (getf *world* prop) (+ propcont cellperdec)))
             (t (continue))))))
             
 (defun Cell-Pho (celli) ;;TODO: Incorperate Lux into the photosynthesis process.
