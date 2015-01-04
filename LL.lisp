@@ -23,8 +23,12 @@
 (defun btwn (x min max)
   (and (>= x min) (<= x max)))
 
-(defun random-range (min max)
+(defun random-range (min max) ;;Investigate: Random-range not so random?
   (+ min (random (- max min) (make-random-state t))))
+  
+(defun fout (in)
+  (format *standard-output* "~a" in)
+  (force-output *standard-output*))
 
 (defun remove-nth (n lst) ;;TODO: Make iterative in stage three.
   (if (or (zerop n) (null lst))
@@ -83,11 +87,12 @@
       (setf *cells* (read in))
       (setf *world* (read in)))))
       
-(defun rand-mutate (DNA-seq)
-  (let ((gene (random-range 0 (length DNA-seq))))
-    (let ((base (random-range 0 (length (nth gene DNA-seq)))))
-      (cond ((= (nth base (nth gene DNA-seq)) 0) (setf (nth base (nth gene DNA-seq)) 1))
-            (t (setf (nth base (nth gene DNA-seq)) 0))) DNA-seq)))
+(defun rand-mutate (DNA-seq) ;;Bug: All of the cells mutate simulaniously and identically
+  (let ((CDNA-seq (copy-tree DNA-seq)))
+    (let ((gene (random-range 0 (length CDNA-seq))))
+      (let ((base (random-range 0 (length (nth gene CDNA-seq)))))
+        (cond ((= (nth base (nth gene CDNA-seq)) 0) (setf (nth base (nth gene CDNA-seq)) 1))
+              (t (setf (nth base (nth gene CDNA-seq)) 0))) CDNA-seq))))
             
 (defun mutate-times (DNA-seq times)
   (dotimes (i times)
@@ -125,17 +130,18 @@
 ;; SChance = 1 do: Cell Virus Count + 1
 ;; Also impliment this system in 'Cell-Env' 
 (defun Cell-Vir (celli) ;;Note + TODO: Viruses are pretty crazy, there is a lot to do here, revise in stage two...
-  (let ((BPVP nil) (Chance nil) (CPS nil) (NBPVP nil)) ;;Dummy Value: 5 is a place-holder for permeability.
+  (let ((BPVP nil) (Chance nil) (CPS nil) (NBPVP nil)) 
     (setf BPVP (* (/ (getf *world* :BPV) *area*) 100))
     (setf Chance (random-range 1 101))
     (setf CPS (truncate (/ BPVP 100)))
     (setf NBPVP (- BPVP (* CPS 100)))
     (when (<= NBPVP Chance) (incf CPS 1))
     
-    (dotimes (i CPS)
-      (decf (fetch-value :HP celli *cells*) 10)
-      (incf (getf *world* :BPV) 1))))
-
+    (dotimes (i CPS) 
+      (when (= (random-range 1 (+ 5 1)) 1) ;;Dummy Value: 5 is a place-holder for permeability.
+        (decf (fetch-value :HP celli *cells*) 10)
+        (incf (getf *world* :BPV) 1)))))
+          
 ;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
   (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (cellperdec nil))
@@ -194,9 +200,9 @@
 		    ((= dir 8) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y))
 		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))))))  
   
-(defun Cell-Mut (celli)
+(defun Cell-Mut (celli) ;;Bug: All of the cells mutate simulaniously and identically
   (when (<= (random-range 1 101) (getf *world* :RAD))
-    (rand-mutate (fetch-value :DNA celli *cells*))))
+    (setf (fetch-value :DNA celli *cells*) (rand-mutate (fetch-value :DNA celli *cells*)))))
   
 (defun Cell-Rep (celli)
   (when (>= (fetch-value :ATP celli *cells*) 1500)
@@ -234,10 +240,14 @@
   (dotimes-dec (i (length *cells*))
 	(Cell-Mut i))
   (dotimes-dec (i (length *cells*))
+	(Cell-Vir i))
+  (dotimes-dec (i (length *cells*))
 	(Cell-Rep i))
   (dotimes-dec (i (length *cells*))
 	(Cell-Apo i))
-	)
+	
+	(fout *generation*)
+	(fresh-line))
 
 (defun autoplay-sim (&optional (delay 0))
   (sdl:with-init ()
@@ -252,7 +262,7 @@
         (dotimes (celli (length *cells*))
           (let ((POS (fetch-value :POS celli *cells*)))
                   (sdl-gfx:draw-box (sdl:rectangle :x (* (car POS) *pixsize*) :y (* (cdr POS) *pixsize*)
-                                    :w *pixsize* :h *pixsize*) :color sdl:*white*)))
+                                    :w *pixsize* :h *pixsize*) :color (if (> (GeneR celli 'chlorop) 1) sdl:*green* sdl:*white*))))
         (sdl:update-display)))))
 
 (init-sim)
