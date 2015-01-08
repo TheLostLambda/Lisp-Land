@@ -144,7 +144,7 @@
           
 ;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
-  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil) (cellperinc nil) (cellperdec nil))
+  (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil))
     (do ((i 0 (1+ i)))
         ((>= i 6)) ;;Note + TODO: 6 is for the four main macromolecules plus CO2 and O2, make more portable later...
       
@@ -152,11 +152,26 @@
       (setf cprop (nth i '(:NA :AA :FA :G :O2 :CO2))) ;;TODO: Make more portable later...
       (setf propcont (getf *world* prop))
       (setf cpropcont (fetch-value cprop celli *cells*))
-      (setf cellperinc (float (/ propcont (* 5 *area*)))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
-      (setf cellperdec (float (/ cpropcont 5 ))) ;;Dummy Value: 5 is a place-holder for permeability. <<-- TODO: Revise this
       
-      (cond ((< cpropcont (/ propcont *area*)) (setf (fetch-value cprop celli *cells*) (+ cpropcont cellperinc)) (setf (getf *world* prop) (- propcont cellperinc)))
-            ((> cpropcont (/ propcont *area*)) (setf (fetch-value cprop celli *cells*) (- cpropcont cellperdec)) (setf (getf *world* prop) (+ propcont cellperdec)))
+      ;;NOTE + TODO: This is a hiding place for bugs, review this.
+      (cond ((> cpropcont (/ propcont *area*))
+              (let ((CPS (fetch-value cprop celli *cells*)))
+                (dotimes (i CPS)
+                  (when (= (random-range 1 (+ 5 1)) 1) ;;Dummy Value: 5 is a place-holder for permeability.
+                    (decf (fetch-value cprop celli *cells*) 1)
+                    (incf (getf *world* prop))))))
+            ((< cpropcont (/ propcont *area*))
+              (let ((PropVal nil) (Chance nil) (CPS nil) (NPropVal nil)) 
+				(setf PropVal (* (/ (getf *world* prop) *area*) 100))
+				(setf Chance (random-range 1 101))
+				(setf CPS (truncate (/ PropVal 100)))
+				(setf NPropVal (- PropVal (* CPS 100)))
+				(when (<= NPropVal Chance) (incf CPS 1))
+    
+				(dotimes (i CPS) 
+				  (when (= (random-range 1 (+ 5 1)) 1) ;;Dummy Value: 5 is a place-holder for permeability.
+					(decf (getf *world* prop) 1)
+					(incf (fetch-value cprop celli *cells*) 1)))))
             (t (continue))))))
             
 (defun Cell-Pho (celli) ;;TODO: Incorperate Lux into the photosynthesis process.
@@ -203,17 +218,18 @@
 (defun Cell-Mut (celli) ;;Bug: All of the cells mutate simulaniously and identically
   (when (<= (random-range 1 101) (getf *world* :RAD))
     (setf (fetch-value :DNA celli *cells*) (rand-mutate (fetch-value :DNA celli *cells*)))))
-  
+
+;;NOTE + TODO: Truncate here is breaking the conservation law. Some molicules are just destroyed. Fix this.  
 (defun Cell-Rep (celli)
   (when (>= (fetch-value :ATP celli *cells*) 1500)
     (let ((POS (fetch-value :POS celli *cells*))
-          (ATP (float (/ (- (fetch-value :ATP celli *cells*) 1000) 2)))
-          (NA (float (/ (fetch-value :NA celli *cells*) 2)))
-          (AA (float (/ (fetch-value :AA celli *cells*) 2)))
-          (FA (float (/ (fetch-value :FA celli *cells*) 2)))
-          (G (float (/ (fetch-value :G celli *cells*) 2)))
-          (O2 (float (/ (fetch-value :O2 celli *cells*) 2)))
-          (CO2 (float (/ (fetch-value :CO2 celli *cells*) 2)))
+          (ATP (truncate (/ (- (fetch-value :ATP celli *cells*) 1000) 2)))
+          (NA (truncate (/ (fetch-value :NA celli *cells*) 2)))
+          (AA (truncate (/ (fetch-value :AA celli *cells*) 2)))
+          (FA (truncate (/ (fetch-value :FA celli *cells*) 2)))
+          (G (truncate (/ (fetch-value :G celli *cells*) 2)))
+          (O2 (truncate (/ (fetch-value :O2 celli *cells*) 2)))
+          (CO2 (truncate (/ (fetch-value :CO2 celli *cells*) 2)))
           (DNA (fetch-value :DNA celli *cells*)))
   
       (setf (fetch-value :ATP celli *cells*) ATP)
