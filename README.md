@@ -33,6 +33,6 @@ Slots 30-31 default to "No Chlorophyll"
 #####Gene 2 - Primary Membrane Composition:
 Determines permeability of the membrane (Integer 1-10)
 Slots 30-31 default to "Free Fatty Acids".
-* Phospholipids (purely saturated) [0-9] = Perm:5
-* Phospholipids (mixed) [10-19] = Perm:4
-* Free Fatty Acids [20-29] = Perm:3
+* Phospholipids (purely saturated) [0-9] = Perm:4
+* Phospholipids (mixed) [10-19] = Perm:3
+* Free Fatty Acids [20-29] = Perm:2
