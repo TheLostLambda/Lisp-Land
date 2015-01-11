@@ -11,8 +11,25 @@
            (setf Chlorop 1))) ;;This is the "default value". AKA if the gene is not expressed.
     (cond ((equal var 'chlorop)
            Chlorop))))
+           
+(defun G1 (celli var)
+  (let ((Gval (parse-gene (nth 1 (fetch-value :DNA celli *cells*))))
+        (Perm nil))
+    (cond ((btwn Gval 0 9)
+           (setf Perm 2))
+          ((btwn Gval 10 19)
+           (setf Perm 3))
+          ((btwn Gval 20 29)
+           (setf Perm 4))
+          (t 
+           (setf Perm 1))) ;;This is the "default value". AKA if the gene is not expressed.
+    (cond ((equal var 'perm)
+           Perm))))
 
 (defun GeneR (celli var)
   (cond ((equal var 'chlorop)
     (let ((Chlorop 0))
-      (incf Chlorop (G0 celli var)) Chlorop))))
+      (incf Chlorop (G0 celli var)) Chlorop))
+        ((equal var 'perm)
+    (let ((Perm 0))
+      (incf Perm (G1 celli var)) Perm))))

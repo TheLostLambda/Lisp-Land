@@ -3,7 +3,7 @@
 ;;Stage 2: Add in realism and research (6-7 weeks) : IN PROGRESS
 ;;Stage 3: Beautify and refine code (1-2 weeks) : TODO
 
-;;;; Current Task: Revision of Cellular Diffusion
+;;;; Current Task: Adding Genes and Variables
 
 (ql:quickload 'lispbuilder-sdl)
 (ql:quickload 'lispbuilder-sdl-gfx)
@@ -11,7 +11,7 @@
 (defparameter *width* 100)
 (defparameter *height* 100)
 (defparameter *area* (* *width* *height*))
-(defparameter *pixsize* 4) ;;Note + TODO: One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
+(defparameter *pixsize* 5) ;;Note + TODO: One "pixel" in the sim is equal to 20um, this is an estimate, revise in stage two.
 (defparameter *umperpix* 20) ;;TODO: Use this in stage two to create a correctly scaled measure of size.
 (defparameter *cellHP* 150)
 (defparameter *cells* nil)
@@ -23,7 +23,7 @@
 (defun btwn (x min max)
   (and (>= x min) (<= x max)))
 
-(defun random-range (min max) ;;Investigate: Random-range not so random?
+(defun random-range (min max)
   (+ min (random (- max min) (make-random-state t))))
   
 (defun fout (in)
@@ -87,7 +87,7 @@
       (setf *cells* (read in))
       (setf *world* (read in)))))
       
-(defun rand-mutate (DNA-seq) ;;Bug: All of the cells mutate simulaniously and identically
+(defun rand-mutate (DNA-seq)
   (let ((CDNA-seq (copy-tree DNA-seq)))
     (let ((gene (random-range 0 (length CDNA-seq))))
       (let ((base (random-range 0 (length (nth gene CDNA-seq)))))
@@ -124,11 +124,6 @@
       (decf (fetch-value :HP celli *cells*) 1) ;;Note: Cell aging condition.
       ))  
 
-;; Critical Bug: This system makes it entirely impossible to be infected unless the virus density is above 10,000.
-;; This is unrealistic, to fix this: BPVP = 100(BPVC / Area), Chance = random 0-100, CPS = truncate(BPVP/100),
-;; NBPVP = BPVP - 100(CPS), if NBPVP <= Chance do: CPS = CPS + 1, for each CPS do: SChance = random 1-Perm and if
-;; SChance = 1 do: Cell Virus Count + 1
-;; Also impliment this system in 'Cell-Env' 
 (defun Cell-Vir (celli) ;;Note + TODO: Viruses are pretty crazy, there is a lot to do here, revise in stage two...
   (let ((BPVP nil) (Chance nil) (CPS nil) (NBPVP nil)) 
     (setf BPVP (* (/ (getf *world* :BPV) *area*) 100))
@@ -138,11 +133,10 @@
     (when (<= NBPVP Chance) (incf CPS 1))
     
     (dotimes (i CPS) 
-      (when (= (random-range 1 (+ 5 1)) 1) ;;Dummy Value: 5 is a place-holder for permeability.
+      (when (= (random-range 1 (+ (GeneR celli 'perm) 1)) 1)
         (decf (fetch-value :HP celli *cells*) 10)
         (incf (getf *world* :BPV) 1)))))
           
-;;TODO: Add capability to expel molecules as well.
 (defun Cell-Env (celli) ;;Note + TODO: This is scientifically flawed, revise in stage two...
   (let ((prop nil) (cprop nil) (propcont nil) (cpropcont nil))
     (do ((i 0 (1+ i)))
@@ -157,7 +151,7 @@
       (cond ((> cpropcont (/ propcont *area*))
               (let ((CPS (fetch-value cprop celli *cells*)))
                 (dotimes (i CPS)
-                  (when (= (random-range 1 (+ 5 1)) 1) ;;Dummy Value: 5 is a place-holder for permeability.
+                  (when (= (random-range 1 (+ (GeneR celli 'perm) 1)) 1)
                     (decf (fetch-value cprop celli *cells*) 1)
                     (incf (getf *world* prop))))))
             ((< cpropcont (/ propcont *area*))
@@ -169,7 +163,7 @@
 				(when (<= NPropVal Chance) (incf CPS 1))
     
 				(dotimes (i CPS) 
-				  (when (= (random-range 1 (+ 5 1)) 1) ;;Dummy Value: 5 is a place-holder for permeability.
+				  (when (= (random-range 1 (+ (GeneR celli 'perm) 1)) 1)
 					(decf (getf *world* prop) 1)
 					(incf (fetch-value cprop celli *cells*) 1)))))
             (t (continue))))))
