@@ -149,8 +149,8 @@
       
       ;;NOTE + TODO: This is a hiding place for bugs, review this.
       (cond ((> cpropcont (/ propcont *area*))
-              (let ((CPS (fetch-value cprop celli *cells*)))
-                (dotimes (i CPS)
+              (let ((CPSD (truncate (- cpropcont (/ propcont *area*)))))
+                (dotimes (i CPSD)
                   (when (= (random-range 1 (+ (GeneR celli 'perm) 1)) 1)
                     (decf (fetch-value cprop celli *cells*) 1)
                     (incf (getf *world* prop))))))
