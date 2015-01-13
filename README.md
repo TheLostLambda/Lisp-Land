@@ -16,7 +16,7 @@ Idea/Method
 
 ###Digital DNA Structure
   In order to reach goal number three, each cell will have a unique Digital DNA (dDNA) sequence. The dDNA will be made up of many separate genes, each encoding for a specific trait. Each gene will be a number 0-31 represented in binary, 
-ex. ((0 1 0 1 1) (0 0 0 1 1) (0 1 1 1 0)) Translating to (11 3 14) Not all 31 cases will be used in every gene. In the rare case one trait requires than 31 values, two genes will be used. If data needs to become a percentage, values 1-20 are used and multiplied by 5. See “Genes Translated ” for more in depth info.
+ex. ((0 1 0 1 1) (0 0 0 1 1) (0 1 1 1 0)) Translating to (11 3 14) Not all 31 cases will be used in every gene. In the rare case one trait requires than 31 values, two genes will be used. If data needs to become a percentage, values 1-20 are used and multiplied by 5. See “What 'Genes' code for what?” for more in depth info.
 
 What "Genes" code for what?
 ===========================
@@ -31,8 +31,16 @@ Slots 30-31 default to "No Chlorophyll"
 * Chloroplasts [20-29] = Chlorop:3
 
 #####Gene 2 - Primary Membrane Composition:
-Determines permeability of the membrane (Integer 1-10)
+Determines permeability of the membrane (Integer 1+)
 Slots 30-31 default to "No Membrane" = Perm:1
 * Phospholipids (purely saturated) [0-9] = Perm:4
 * Phospholipids (mixed) [10-19] = Perm:3
 * Free Fatty Acids [20-29] = Perm:2
+
+#####Gene 2 - Primary Cell Wall Composition:
+Determines permeability and rigidity of the membrane (Integer 1+ and Integer 1+)
+Slots 29-31 default to "No Cell Wall" 
+* Cellulose (Primary and Secondary Walls) [0-7] = Perm:3, Rigd:3
+* Cellulose (Primary Wall Only) [8-14] = Perm:2, Rigd:1
+* Chitin [15-21] = Perm:1, Rigd:1
+* No Cell Wall [22-28] = Perm:0, Rigd:0
