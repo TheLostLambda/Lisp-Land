@@ -37,7 +37,7 @@ Slots 30-31 default to "No Membrane" = Perm:1
 * Phospholipids (mixed) [10-19] = Perm:3
 * Free Fatty Acids [20-29] = Perm:2
 
-#####Gene 2 - Primary Cell Wall Composition:
+#####Gene 3 - Primary Cell Wall Composition:
 Determines permeability and rigidity of the membrane (Integer 1+ and Integer 1+)
 Slots 29-31 default to "No Cell Wall" 
 * Cellulose (Primary and Secondary Walls) [0-7] = Perm:3, Rigd:3
