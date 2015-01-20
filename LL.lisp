@@ -1,9 +1,9 @@
 ;;Stage 1: Implement Characteristics of Life (2 weeks) : DONE
 ;;Stage 1.5: Add complementary functions (2 weeks) : DONE
-;;Stage 2: Add in realism and research (6-7 weeks) : IN PROGRESS
-;;Stage 3: Beautify and refine code (1-2 weeks) : TODO
+;;Stage 2: Add in realism and research (6+ weeks) : IN PROGRESS
+;;Stage 3: Beautify and refine code (TBD) : TODO
 
-;;;; Current Task: Adding Genes and Variables
+;;;; Current Task: Rethink 'Cell-Loc'/add 'Cell-Sft' to avoid stacking
 
 (ql:quickload 'lispbuilder-sdl)
 (ql:quickload 'lispbuilder-sdl-gfx)
@@ -207,7 +207,7 @@
 		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1- y) *height*))))
 		    ((= dir 7) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y)))
 		    ((= dir 8) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y))
-		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))))))  
+		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))))))
   
 (defun Cell-Mut (celli) ;;Bug: All of the cells mutate simulaniously and identically
   (when (<= (random-range 1 101) (getf *world* :RAD))
@@ -235,6 +235,14 @@
       (setf (fetch-value :CO2 celli *cells*) CO2)
       (new-cell POS ATP NA AA FA G O2 CO2 DNA)
       (Cell-Loc 0 (random 9 (make-random-state t))))))
+      
+(defun Cell-Sft ()
+  ;;Idea: 
+  ;; 1. Make a function for picking out only duplicate properties (in this case :POS)
+  ;; 2. Make a funtion that returns t if a spot is full, and nil if it is empty
+  ;; 3. Shift any stacked cells to the nearest free space
+  ;; 4. If there are no free spaces around, shift a random direction and recall the function.
+  )
   
 (defun next-tick ()
   (incf *generation* 1)
@@ -255,9 +263,11 @@
 	(Cell-Rep i))
   (dotimes-dec (i (length *cells*))
 	(Cell-Apo i))
-	
-	(fout *generation*)
-	(fresh-line))
+
+  (Cell-Sft)
+  
+  (fout *generation*)
+  (fresh-line))
 
 (defun autoplay-sim (&optional (delay 0))
   (sdl:with-init ()
