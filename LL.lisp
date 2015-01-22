@@ -43,7 +43,15 @@
     ,@body)))
 
 (defmacro fetch-value (accessor index lst)
-  `(getf (nth ,index ,lst) ,accessor))
+  `(getf (nth ,index ,lst) ,accessor))  
+
+(defun seek-propval (accessor value lst)
+  (let ((prop-cells '()))
+  (mapcar #'(lambda (x)
+    (if (equal (getf x accessor) value)
+      (append prop-cells x)
+      (continue)))
+    lst) prop-cells))
   
 (defun fetch-props (lst)
   (let ((nlst nil))
@@ -236,13 +244,12 @@
       (new-cell POS ATP NA AA FA G O2 CO2 DNA)
       (Cell-Loc 0 (random 9 (make-random-state t))))))
       
-(defun Cell-Sft ()
-  ;;Idea: 
-  ;; 1. Make a function for picking out only duplicate properties (in this case :POS)
-  ;; 2. Make a funtion that returns t if a spot is full, and nil if it is empty
-  ;; 3. Shift any stacked cells to the nearest free space
-  ;; 4. If there are no free spaces around, shift a random direction and recall the function.
-  )
+(defun Cell-Sft (celli)
+  (let ((cellpos (fetch-value :POS celli *cells*)))
+    (if (= (length (seek-propval :POS cellpos *cells*)) 1)
+      (continue)
+      ())
+  ))
   
 (defun next-tick ()
   (incf *generation* 1)
@@ -263,8 +270,8 @@
 	(Cell-Rep i))
   (dotimes-dec (i (length *cells*))
 	(Cell-Apo i))
-
-  (Cell-Sft)
+  (dotimes-dec (i (length *cells*))
+	(Cell-Sft i))
   
   (fout *generation*)
   (fresh-line))
