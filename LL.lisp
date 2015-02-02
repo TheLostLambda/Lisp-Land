@@ -52,6 +52,42 @@
       (append prop-cells x)
       (continue)))
     lst) prop-cells))
+    
+(defun surround-space (cen)
+  (let ((x (car cen)) (y (cdr cen)) (openspcs '()))
+  
+    (if (seek-propval :POS (cons x (1+ y)) *cells*)
+      (continue)
+      (append openspcs (cons x (1+ y))))
+      
+    (if (seek-propval :POS (cons (1+ x) (1+ y)) *cells*)
+      (continue)
+      (append openspcs (cons (1+ x) (1+ y))))
+      
+    (if (seek-propval :POS (cons (1+ x) y) *cells*)
+      (continue)
+      (append openspcs (cons (1+ x) y)))
+      
+    (if (seek-propval :POS (cons (1+ x) (1- y)) *cells*)
+      (continue)
+      (append openspcs (cons (1+ x) (1- y))))
+      
+    (if (seek-propval :POS (cons x (1- y)) *cells*)
+      (continue)
+      (append openspcs (cons x (1- y))))
+      
+    (if (seek-propval :POS (cons (1- x) (1- y)) *cells*)
+      (continue)
+      (append openspcs (cons (1- x) (1- y))))
+      
+    (if (seek-propval :POS (cons (1- x) y) *cells*)
+      (continue)
+      (append openspcs (cons (1- x) y)))
+      
+    (if (seek-propval :POS (cons (1- x) (1+ y)) *cells*)
+      (continue)
+      (append openspcs (cons (1- x) (1+ y))))
+      openspcs))
   
 (defun fetch-props (lst)
   (let ((nlst nil))
@@ -217,7 +253,7 @@
 		    ((= dir 8) (setf (fetch-value :POS celli *cells*) (cons (mod (1- x) *width*) y))
 		               (setf (fetch-value :POS celli *cells*) (cons x (mod (1+ y) *height*))))))))
   
-(defun Cell-Mut (celli) ;;Bug: All of the cells mutate simulaniously and identically
+(defun Cell-Mut (celli)
   (when (<= (random-range 1 101) (getf *world* :RAD))
     (setf (fetch-value :DNA celli *cells*) (rand-mutate (fetch-value :DNA celli *cells*)))))
 
@@ -244,12 +280,14 @@
       (new-cell POS ATP NA AA FA G O2 CO2 DNA)
       (Cell-Loc 0 (random 9 (make-random-state t))))))
       
-(defun Cell-Sft (celli)
+(defun Cell-Sft (celli) ;;Bug: This hangs the program
   (let ((cellpos (fetch-value :POS celli *cells*)))
     (if (= (length (seek-propval :POS cellpos *cells*)) 1)
       (continue)
-      ())
-  ))
+      (let ((sur-spc (surround-space cellpos)))
+        (if (equal sur-spc nil)
+          (progn (Cell-Loc celli (random 9 (make-random-state t))) (Cell-Sft celli))
+          (setf (fetch-value :POS celli *cells*) (nth (random-range 0 (length sur-spc)) sur-spc)))))))
   
 (defun next-tick ()
   (incf *generation* 1)
