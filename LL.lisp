@@ -3,7 +3,7 @@
 ;;Stage 2: Add in realism and research (6+ weeks) : IN PROGRESS
 ;;Stage 3: Beautify and refine code (TBD) : TODO
 
-;;;; Current Task: Rethink 'Cell-Loc'/add 'Cell-Sft' to avoid stacking
+;;;; Current Task: Do TODO's
 
 (ql:quickload 'lispbuilder-sdl)
 (ql:quickload 'lispbuilder-sdl-gfx)
@@ -47,46 +47,46 @@
 
 (defun seek-propval (accessor value lst)
   (let ((prop-cells '()))
-  (mapcar #'(lambda (x)
-    (if (equal (getf x accessor) value)
-      (append prop-cells x)
-      (continue)))
-    lst) prop-cells))
+    (mapcar #'(lambda (x)
+      (if (equal (getf x accessor) value)
+        (setf prop-cells (append prop-cells x))
+        (continue)))
+      lst) prop-cells))
     
 (defun surround-space (cen)
   (let ((x (car cen)) (y (cdr cen)) (openspcs '()))
   
     (if (seek-propval :POS (cons x (1+ y)) *cells*)
       (continue)
-      (append openspcs (cons x (1+ y))))
+      (setf openspcs (append openspcs `(,(cons x (1+ y))))))
       
     (if (seek-propval :POS (cons (1+ x) (1+ y)) *cells*)
       (continue)
-      (append openspcs (cons (1+ x) (1+ y))))
+      (setf openspcs (append openspcs `(,(cons (1+ x) (1+ y))))))
       
     (if (seek-propval :POS (cons (1+ x) y) *cells*)
       (continue)
-      (append openspcs (cons (1+ x) y)))
+      (setf openspcs (append openspcs `(,(cons (1+ x) y)))))
       
     (if (seek-propval :POS (cons (1+ x) (1- y)) *cells*)
       (continue)
-      (append openspcs (cons (1+ x) (1- y))))
+      (setf openspcs (append openspcs `(,(cons (1+ x) (1- y))))))
       
     (if (seek-propval :POS (cons x (1- y)) *cells*)
       (continue)
-      (append openspcs (cons x (1- y))))
+      (setf openspcs (append openspcs `(,(cons x (1- y))))))
       
     (if (seek-propval :POS (cons (1- x) (1- y)) *cells*)
       (continue)
-      (append openspcs (cons (1- x) (1- y))))
+      (setf openspcs (append openspcs `(,(cons (1- x) (1- y))))))
       
     (if (seek-propval :POS (cons (1- x) y) *cells*)
       (continue)
-      (append openspcs (cons (1- x) y)))
+      (setf openspcs (append openspcs `(,(cons (1- x) y)))))
       
     (if (seek-propval :POS (cons (1- x) (1+ y)) *cells*)
       (continue)
-      (append openspcs (cons (1- x) (1+ y))))
+      (setf openspcs (append openspcs `(,(cons (1- x) (1+ y))))))
       openspcs))
   
 (defun fetch-props (lst)
@@ -280,10 +280,9 @@
       (new-cell POS ATP NA AA FA G O2 CO2 DNA)
       (Cell-Loc 0 (random 9 (make-random-state t))))))
       
-(defun Cell-Sft (celli) ;;Bug: This hangs the program
+(defun Cell-Sft (celli)
   (let ((cellpos (fetch-value :POS celli *cells*)))
-    (if (= (length (seek-propval :POS cellpos *cells*)) 1)
-      (continue)
+    (when (<= (length (seek-propval :POS cellpos *cells*)) 1)
       (let ((sur-spc (surround-space cellpos)))
         (if (equal sur-spc nil)
           (progn (Cell-Loc celli (random 9 (make-random-state t))) (Cell-Sft celli))
